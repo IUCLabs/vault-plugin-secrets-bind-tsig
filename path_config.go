@@ -10,7 +10,7 @@ import (
 
 const configStoragePath = "config"
 
-// bindTSIGConfig is the connection to the bind-operator companion API.
+// bindTSIGConfig is the connection to the companion API.
 type bindTSIGConfig struct {
 	APIURL                string `json:"api_url"`
 	Token                 string `json:"token"`
@@ -31,7 +31,7 @@ func pathConfig(b *bindTSIGBackend) *framework.Path {
 		Fields: map[string]*framework.FieldSchema{
 			"api_url": {
 				Type:        framework.TypeString,
-				Description: "Base URL of the bind-operator companion API, e.g. https://bind-tsig-api.bind-system.svc:8443.",
+				Description: "Base URL of the companion API, e.g. https://tsig-api.example.com:8443.",
 				Required:    true,
 			},
 			"token": {
@@ -63,7 +63,7 @@ func pathConfig(b *bindTSIGBackend) *framework.Path {
 			},
 			"default_cluster_ref": {
 				Type:        framework.TypeString,
-				Description: "Default BindCluster a key is scoped to when a role does not set one.",
+				Description: "Default BIND cluster a key is scoped to when a role does not set one.",
 			},
 		},
 		Operations: map[logical.Operation]framework.OperationHandler{
@@ -73,7 +73,7 @@ func pathConfig(b *bindTSIGBackend) *framework.Path {
 			logical.DeleteOperation: &framework.PathOperation{Callback: b.pathConfigDelete},
 		},
 		ExistenceCheck:  b.pathConfigExistenceCheck,
-		HelpSynopsis:    "Configure the connection to the bind-operator companion API.",
+		HelpSynopsis:    "Configure the connection to the companion API.",
 		HelpDescription: "Configure the URL and token the backend uses to manage BIND TSIG keys.",
 	}
 }

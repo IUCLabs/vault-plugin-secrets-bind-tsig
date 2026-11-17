@@ -1,68 +1,94 @@
 # vault-plugin-secrets-bind-tsig
 
-A HashiCorp Vault / OpenBao secrets engine that manages **BIND TSIG keys** via
-the [bind-operator](https://git.unkin.net/unkin/bind-operator) companion API.
+A HashiCorp Vault / OpenBao secrets engine that manages BIND TSIG keys.
 
-Vault never talks to Kubernetes directly: it calls the operator's companion API
-(deployed by the operator, boolean-gated), which creates/rotates/deletes
-`BindTSIGKey` custom resources. The operator reconciles those into the actual
-key material and wires them into `named.conf`.
+Static roles give you a stable, named key whose material Vault rotates on a
+schedule; dynamic roles mint a unique, lease-bound key per request and delete it
+when the lease is revoked. Vault never touches BIND directly: it calls a small
+HTTP "companion API" (any service implementing the companion API contract, see
+[docs/companion-api.md](docs/companion-api.md)) that provisions the keys and
+wires them into `named.conf`.
 
 ```
-Vault plugin ──HTTP──> companion API ──creates/rotates──> BindTSIGKey CR
-                                                              │ operator reconciles
-                                                              ▼
-                                                    Secret (key material) + named.conf
+Vault/OpenBao ──HTTP──▶ companion API ──▶ TSIG key material + named.conf
 ```
 
-## Paths
+## Why use this plugin?
 
-| Path | Purpose |
-|------|---------|
-| `<mount>/config` | companion API URL + token + TLS + defaults |
-| `<mount>/static-roles/<role>` | a stable, named key with **managed rotation** (the key name never changes, so zone `allow-update` clauses stay valid) |
-| `<mount>/static-creds/<role>` | read the current material for a static key (rotates first if the period elapsed) |
-| `<mount>/roles/<role>` | a **dynamic** role |
-| `<mount>/creds/<role>` | mint a unique, **lease-bound** key; deleted on revoke |
+TSIG keys for dynamic DNS updates tend to be generated once, pasted into config
+management and never rotated. This engine puts them behind Vault policy and
+audit: clients that need to update a zone read their key from Vault, static keys
+rotate without changing the key name (so `allow-update` clauses stay valid), and
+short-lived jobs get a throwaway key that disappears with their lease.
 
-## Companion API contract
+## Requirements
 
-The plugin expects the bind-operator companion API to expose:
+- HashiCorp Vault or OpenBao with a `plugin_directory` configured (tested
+  end-to-end against Vault 1.18 and the latest OpenBao release)
+- A companion API reachable from the Vault servers
+- Go 1.25+ to build from source
 
-- `POST /v1/keys` — `{name, algorithm, cluster_ref, static}` → creates a `BindTSIGKey`, returns `{name, algorithm, secret, key_name, cluster_ref}`
-- `GET /v1/keys/{name}` — current material
-- `POST /v1/keys/{name}/rotate` — rotate material, returns the new value
-- `DELETE /v1/keys/{name}` — delete the key + its CR
+## Installation
 
-## Usage
+Download a binary from the [releases page](https://github.com/IUCLabs/vault-plugin-secrets-bind-tsig/releases), or build one:
 
 ```sh
-# register + enable (Vault plugin_directory must contain the binary)
-sha=$(sha256sum /opt/vault-plugins/vault-plugin-secrets-bind-tsig | cut -d' ' -f1)
-vault plugin register -sha256=$sha secret vault-plugin-secrets-bind-tsig
+git clone https://github.com/IUCLabs/vault-plugin-secrets-bind-tsig
+cd vault-plugin-secrets-bind-tsig
+make build   # -> dist/vault-plugin-secrets-bind-tsig
+```
+
+Copy the binary into the directory set by `plugin_directory` in the server
+config (Vault or OpenBao), then register and enable it. The commands are
+identical for OpenBao — use `bao` instead of `vault`.
+
+```sh
+PLUGIN_DIR=/etc/vault/plugins   # must match plugin_directory in the server config
+SHA256=$(sha256sum "$PLUGIN_DIR/vault-plugin-secrets-bind-tsig" | cut -d' ' -f1)
+
+vault plugin register -sha256="$SHA256" secret vault-plugin-secrets-bind-tsig
 vault secrets enable -path=bind-tsig vault-plugin-secrets-bind-tsig
+```
 
-# configure the companion API connection
+## Quick start
+
+```sh
+# Point the engine at the companion API.
 vault write bind-tsig/config \
-  api_url=https://bind-tsig-api.bind-system.svc:8443 \
-  token=@token default_cluster_ref=bind-authoritative
+  api_url=https://tsig-api.example.com:8443 \
+  token=@api-token.txt \
+  ca_cert=@ca.pem \
+  default_cluster_ref=authoritative
 
-# a static, rotated key (e.g. the puppet client-update key)
-vault write bind-tsig/static-roles/client-update rotation_period=720h
-vault read  bind-tsig/static-creds/client-update
+# A static key, rotated every 30 days.
+vault write bind-tsig/static-roles/ddns-client rotation_period=720h
+vault read  bind-tsig/static-creds/ddns-client
 
-# a dynamic, lease-bound key
-vault write bind-tsig/roles/ephemeral cluster_ref=bind-authoritative ttl=1h max_ttl=24h
+# A dynamic, lease-bound key.
+vault write bind-tsig/roles/ephemeral ttl=1h max_ttl=24h
 vault read  bind-tsig/creds/ephemeral
 ```
 
-## Build
+Use the returned `key_name`, `algorithm` and `secret` with any TSIG client, e.g.
+`nsupdate -y "hmac-sha256:<key_name>:<secret>"`.
+
+## Documentation
+
+Full path and parameter reference lives in [`docs/`](docs/):
+
+- [Configuration](docs/config.md)
+- [Static roles and credentials](docs/static-roles.md)
+- [Dynamic roles and credentials](docs/roles.md)
+- [Companion API contract](docs/companion-api.md)
+
+## Development
 
 ```sh
-make build      # -> dist/vault-plugin-secrets-bind-tsig
-make test lint  # go test -race / go vet
-make rpm        # vault + openbao RPM flavours
+make test   # unit tests (go test -race)
+make lint   # go vet
+make e2e    # Docker: mock companion API + Vault + OpenBao, full lifecycle
 ```
 
-CI (Woodpecker) runs pre-commit/build/lint/test on PRs and builds+publishes the
-RPMs on a `v*` tag.
+## License
+
+[MIT](LICENSE)

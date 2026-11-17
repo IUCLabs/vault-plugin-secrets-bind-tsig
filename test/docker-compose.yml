@@ -1,6 +1,6 @@
-# End-to-end test stack. A mock bind-operator companion API (in-memory, no k8s)
-# plus two secrets-engine hosts running the exact same plugin binary: HashiCorp
-# Vault and OpenBao. Bind mounts use ":z" so they work under SELinux.
+# End-to-end test stack. A mock companion API (in-memory) plus two
+# secrets-engine hosts running the exact same plugin binary: HashiCorp Vault and
+# OpenBao. Bind mounts use ":z" so they work under SELinux.
 services:
   companion-api:
     image: golang:1.25-alpine

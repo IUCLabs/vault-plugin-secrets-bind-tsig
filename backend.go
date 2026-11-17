@@ -1,8 +1,7 @@
 // Package bindtsig implements a Vault / OpenBao secrets engine that manages
-// BIND TSIG keys through the bind-operator's companion API. Static roles expose
-// a named key with managed rotation; dynamic roles mint unique, lease-bound
-// keys. The companion API owns the BindTSIGKey CRs; the operator reconciles
-// them into the actual key material.
+// BIND TSIG keys through a companion API. Static roles expose a named key with
+// managed rotation; dynamic roles mint unique, lease-bound keys. The companion
+// API owns key provisioning, storage and rotation.
 package bindtsig
 
 import (
@@ -115,8 +114,7 @@ func (b *bindTSIGBackend) getClient(ctx context.Context, s logical.Storage) (*ap
 }
 
 const backendHelp = `
-The bind-tsig secrets engine manages BIND TSIG keys via the bind-operator
-companion API.
+The bind-tsig secrets engine manages BIND TSIG keys via a companion API.
 
 Static roles expose a stable, named key whose material Vault rotates on a
 schedule (the key name never changes, so zone allow-update clauses stay valid).

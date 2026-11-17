@@ -17,7 +17,7 @@ func (b *bindTSIGBackend) tsigKeySecret() *framework.Secret {
 		Fields: map[string]*framework.FieldSchema{
 			"name": {
 				Type:        framework.TypeString,
-				Description: "The BindTSIGKey resource name.",
+				Description: "The key name assigned by the companion API.",
 			},
 			"key_name": {
 				Type:        framework.TypeString,
@@ -33,7 +33,7 @@ func (b *bindTSIGBackend) tsigKeySecret() *framework.Secret {
 	}
 }
 
-// secretRevoke deletes the dynamic key (and its BindTSIGKey CR) via the API.
+// secretRevoke deletes the dynamic key via the companion API.
 func (b *bindTSIGBackend) secretRevoke(ctx context.Context, req *logical.Request, _ *framework.FieldData) (*logical.Response, error) {
 	rawName, ok := req.Secret.InternalData["name"]
 	if !ok {

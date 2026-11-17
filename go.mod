@@ -1,4 +1,4 @@
-module git.unkin.net/unkin/vault-plugin-secrets-bind-tsig
+module github.com/IUCLabs/vault-plugin-secrets-bind-tsig
 
 go 1.25.0
 

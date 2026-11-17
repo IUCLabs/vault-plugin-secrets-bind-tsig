@@ -39,7 +39,7 @@ func pathRole(b *bindTSIGBackend) *framework.Path {
 			},
 			"cluster_ref": {
 				Type:        framework.TypeString,
-				Description: "BindCluster the generated keys are scoped to (defaults to the config default).",
+				Description: "BIND cluster the generated keys are scoped to (defaults to the config default).",
 			},
 			"ttl": {
 				Type:        framework.TypeDurationSecond,

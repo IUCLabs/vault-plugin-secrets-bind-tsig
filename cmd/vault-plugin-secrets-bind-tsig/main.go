@@ -7,7 +7,7 @@ import (
 	"github.com/hashicorp/vault/api"
 	"github.com/hashicorp/vault/sdk/plugin"
 
-	bindtsig "git.unkin.net/unkin/vault-plugin-secrets-bind-tsig"
+	bindtsig "github.com/IUCLabs/vault-plugin-secrets-bind-tsig"
 )
 
 func main() {

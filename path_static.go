@@ -45,7 +45,7 @@ func pathStaticRole(b *bindTSIGBackend) *framework.Path {
 			},
 			"cluster_ref": {
 				Type:        framework.TypeString,
-				Description: "BindCluster the key is scoped to (defaults to the config default).",
+				Description: "BIND cluster the key is scoped to (defaults to the config default).",
 			},
 			"rotation_period": {
 				Type:        framework.TypeDurationSecond,

@@ -1,7 +1,7 @@
-// Command mockapi is an in-memory stand-in for the bind-operator companion API,
+// Command mockapi is an in-memory stand-in for the companion API,
 // used by the e2e tests. It implements the /v1/keys contract the plugin expects
-// (create/read/rotate/delete), generating random TSIG material — no Kubernetes
-// required. Not for production use.
+// (create/read/rotate/delete), generating random TSIG material. Not for
+// production use.
 package main
 
 import (

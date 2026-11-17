@@ -17,8 +17,8 @@ import (
 
 const defaultHTTPTimeout = 30 * time.Second
 
-// apiClient talks to the bind-operator companion API, which manages BindTSIGKey
-// CRs and their rotation. The operator reconciles the CRs into key material.
+// apiClient talks to the companion API, which provisions TSIG keys and
+// handles their rotation.
 type apiClient struct {
 	baseURL    string
 	token      string
@@ -76,8 +76,8 @@ func newClient(config *bindTSIGConfig) (*apiClient, error) {
 	}, nil
 }
 
-// CreateKey asks the companion API to provision a TSIG key. The API creates a
-// BindTSIGKey CR and returns the reconciled material.
+// CreateKey asks the companion API to provision a TSIG key and returns its
+// material.
 func (c *apiClient) CreateKey(ctx context.Context, req createKeyRequest) (*tsigKey, error) {
 	var out tsigKey
 	if err := c.do(ctx, http.MethodPost, "/v1/keys", req, &out); err != nil {
@@ -107,7 +107,7 @@ func (c *apiClient) RotateKey(ctx context.Context, name string) (*tsigKey, error
 	return &out, nil
 }
 
-// DeleteKey removes a key (and its BindTSIGKey CR). A missing key is success.
+// DeleteKey removes a key. A missing key is success.
 func (c *apiClient) DeleteKey(ctx context.Context, name string) error {
 	return c.do(ctx, http.MethodDelete, "/v1/keys/"+url.PathEscape(name), nil, nil)
 }
