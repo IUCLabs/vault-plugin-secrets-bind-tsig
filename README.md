@@ -30,7 +30,7 @@ short-lived jobs get a throwaway key that disappears with their lease.
 
 ## Installation
 
-Download a binary from the [releases page](https://github.com/IUCLabs/vault-plugin-secrets-bind-tsig/releases), or build one:
+Install the x86_64 RPM (vault or openbao flavour) from the [releases page](https://github.com/IUCLabs/vault-plugin-secrets-bind-tsig/releases), or build one:
 
 ```sh
 git clone https://github.com/IUCLabs/vault-plugin-secrets-bind-tsig
