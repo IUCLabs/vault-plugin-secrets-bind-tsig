@@ -43,27 +43,34 @@ BASE=https://artifactapi.k8s.syd1.au.unkin.net/api/v1/remote/github/IUCLabs/vaul
 
 ### RPM
 
-`vault-plugin-secrets-bind-tsig` installs `/usr/libexec/vault-plugins/vault-plugin-secrets-bind-tsig`;
-`openbao-plugin-secrets-bind-tsig` installs it in `/usr/libexec/openbao-plugins/`.
-Set the server's `plugin_directory` to that directory.
+Install the Vault RPM or the OpenBao RPM, not both. Set the server's
+`plugin_directory` to the directory the RPM installs into.
+
+Vault: installs `/usr/libexec/vault-plugins/vault-plugin-secrets-bind-tsig`.
 
 ```sh
 dnf install vault-plugin-secrets-bind-tsig  # from a yum repo carrying it, or from the release:
-dnf install "$BASE/vault-plugin-secrets-bind-tsig-$V-1.x86_64.rpm"  # openbao-plugin-secrets-bind-tsig-$V-1.x86_64.rpm for OpenBao
+dnf install "$BASE/vault-plugin-secrets-bind-tsig-$V-1.x86_64.rpm"
 
 SHA256=$(sha256sum /usr/libexec/vault-plugins/vault-plugin-secrets-bind-tsig | cut -d' ' -f1)
 ```
 
+OpenBao: installs `/usr/libexec/openbao-plugins/vault-plugin-secrets-bind-tsig`.
+
+```sh
+dnf install openbao-plugin-secrets-bind-tsig  # from a yum repo carrying it, or from the release:
+dnf install "$BASE/openbao-plugin-secrets-bind-tsig-$V-1.x86_64.rpm"
+
+SHA256=$(sha256sum /usr/libexec/openbao-plugins/vault-plugin-secrets-bind-tsig | cut -d' ' -f1)
+```
+
 ### Released binary
 
-`vault-plugin-secrets-bind-tsig_<version>_SHA256SUMS` lists the binary and the RPMs, and
-`SHA256SUMS.sig` is its detached signature by the IUCLabs release GPG key.
+`vault-plugin-secrets-bind-tsig_<version>_SHA256SUMS` lists the binary and the RPMs.
 
 ```sh
 curl -fLO "$BASE/vault-plugin-secrets-bind-tsig_${V}_linux_amd64"
 curl -fLO "$BASE/vault-plugin-secrets-bind-tsig_${V}_SHA256SUMS"
-curl -fLO "$BASE/vault-plugin-secrets-bind-tsig_${V}_SHA256SUMS.sig"
-gpg --verify "vault-plugin-secrets-bind-tsig_${V}_SHA256SUMS.sig" "vault-plugin-secrets-bind-tsig_${V}_SHA256SUMS"
 sha256sum --check --ignore-missing "vault-plugin-secrets-bind-tsig_${V}_SHA256SUMS"
 
 install -m 0755 "vault-plugin-secrets-bind-tsig_${V}_linux_amd64" <plugin_directory>/vault-plugin-secrets-bind-tsig
@@ -75,8 +82,8 @@ SHA256=$(sha256sum <plugin_directory>/vault-plugin-secrets-bind-tsig | cut -d' '
 `ghcr.io/iuclabs/vault-plugin-secrets-bind-tsig:<tag>` is a `FROM scratch` image holding only
 `/vault-plugin-secrets-bind-tsig`. Mount it read-only into the Vault/OpenBao container with an
 [image volume](https://kubernetes.io/docs/concepts/storage/volumes/#image):
-Kubernetes 1.31+ with the `ImageVolume` feature gate (beta, on by default from
-1.33). Vault and OpenBao only run a binary that sits directly in
+Image volumes are beta from Kubernetes 1.33 but off by default (enable the
+`ImageVolume` feature gate), on by default from 1.35, and GA in 1.36. Vault and OpenBao only run a binary that sits directly in
 `plugin_directory`, not in a subdirectory, so mount the file itself with
 `subPath`, which on image volumes needs 1.33+.
 
